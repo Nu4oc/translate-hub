@@ -9,23 +9,45 @@
     font-family: Arial, sans-serif;
     background-color: #f4f4f4;
     padding: 2rem;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
   h1 {
     text-align: center;
+    margin-bottom: 1rem;
+  }
+  .translator-container {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+    max-width: 800px;
+    flex-wrap: wrap;
+  }
+  .text-box {
+    flex: 1;
+    min-width: 300px;
   }
   textarea {
     width: 100%;
     padding: 0.8rem;
     font-size: 1rem;
-    margin-bottom: 0.5rem;
     border-radius: 5px;
     border: 1px solid #ccc;
     resize: vertical;
+    min-height: 150px;
+  }
+  .controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
   }
   button, select {
     padding: 0.8rem;
     font-size: 1rem;
-    margin: 0.5rem 0;
     border-radius: 5px;
     cursor: pointer;
   }
@@ -37,79 +59,97 @@
   button:hover {
     background-color: #0056b3;
   }
-  pre {
-    background: #fff;
-    padding: 1rem;
-    border-radius: 5px;
-    white-space: pre-wrap;
-  }
-  .row {
-    display: flex;
-    gap: 0.5rem;
+  select {
+    border: 1px solid #ccc;
   }
 </style>
 </head>
 <body>
-
 <h1>Mini Translator (EN ↔ VI)</h1>
 
-<textarea id="inputText" rows="5" placeholder="Nhập văn bản...">Hello, how are you?</textarea>
-
-<div class="row">
-  <select id="sourceLang">
-    <option value="en">English</option>
-    <option value="vi">Tiếng Việt</option>
-  </select>
-  <button onclick="switchLang()">🔄 Switch</button>
+<div class="translator-container">
+  <div class="text-box">
+    <select id="sourceLang">
+      <option value="en">English</option>
+      <option value="vi">Tiếng Việt</option>
+    </select>
+    <textarea id="inputText" placeholder="Nhập văn bản...">Hello, how are you?</textarea>
+  </div>
+  <div class="controls">
+    <button onclick="switchLang()">🔄</button>
+  </div>
+  <div class="text-box">
+    <select id="targetLang">
+      <option value="vi">Tiếng Việt</option>
+      <option value="en">English</option>
+    </select>
+    <textarea id="outputText" placeholder="Kết quả dịch" readonly></textarea>
+  </div>
 </div>
 
-<button onclick="translateText()">Dịch ngay</button>
-
-<h2>Kết quả:</h2>
-<pre id="outputText"></pre>
+<div class="controls">
+  <button onclick="translateText()">Dịch ngay</button>
+</div>
 
 <script>
-const API_KEY = "AIzaSyDiT4Um_axMoRkmpKLe9w-CRAtJkoki5uk";
-const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+// Placeholder translation function (replace with actual API call)
+async function mockTranslate(text, sourceLang, targetLang) {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Mock translation logic
+  const translations = {
+    en: {
+      vi: {
+        "Hello, how are you?": "Xin chào, bạn khỏe không?"
+      }
+    },
+    vi: {
+      en: {
+        "Xin chào, bạn khỏe không?": "Hello, how are you?"
+      }
+    }
+  };
+  
+  return translations[sourceLang]?.[targetLang]?.[text] || `Translated: ${text}`;
+}
 
 function switchLang() {
-  const select = document.getElementById("sourceLang");
-  select.value = select.value === "en" ? "vi" : "en";
+  const sourceLang = document.getElementById("sourceLang");
+  const targetLang = document.getElementById("targetLang");
+  const inputText = document.getElementById("inputText");
+  const outputText = document.getElementById("outputText");
+  
+  // Swap languages
+  const tempLang = sourceLang.value;
+  sourceLang.value = targetLang.value;
+  targetLang.value = tempLang;
+  
+  // Swap text
+  const tempText = inputText.value;
+  inputText.value = outputText.value;
+  outputText.value = tempText;
 }
 
 async function translateText() {
   const inputText = document.getElementById("inputText").value.trim();
   const sourceLang = document.getElementById("sourceLang").value;
-  const targetLang = sourceLang === "en" ? "vi" : "en";
-  const output = document.getElementById("outputText");
+  const targetLang = document.getElementById("targetLang").value;
+  const outputText = document.getElementById("outputText");
 
   if (!inputText) {
-    output.textContent = "Vui lòng nhập văn bản.";
+    outputText.value = "Vui lòng nhập văn bản.";
     return;
   }
 
-  output.textContent = "Đang dịch...";
-
-  // Prompt mặc định
-  const prompt = `Dịch văn bản sau sang ${targetLang === 'en' ? 'English' : 'Tiếng Việt'}: "${inputText}"`;
+  outputText.value = "Đang dịch...";
 
   try {
-    const response = await fetch(`${API_URL}?key=${API_KEY}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
-      })
-    });
-
-    const data = await response.json();
-    if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content[0].text) {
-      output.textContent = data.candidates[0].content[0].text;
-    } else {
-      output.textContent = "Không nhận được kết quả hoặc lỗi API.\n" + JSON.stringify(data, null, 2);
-    }
+    // Replace this with actual API call
+    const translatedText = await mockTranslate(inputText, sourceLang, targetLang);
+    outputText.value = translatedText;
   } catch (err) {
-    output.textContent = "Lỗi: " + err;
+    outputText.value = "Lỗi: " + err.message;
   }
 }
 </script>
