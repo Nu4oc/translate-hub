@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quick AI Translator</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    padding: 2rem;
+    background: #f4f4f4;
+  }
+  h1 {
+    text-align: center;
+  }
+  textarea, input, button {
+    width: 100%;
+    padding: 0.8rem;
+    margin: 0.5rem 0;
+    font-size: 1rem;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+  }
+  button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  button:hover {
+    background-color: #0056b3;
+  }
+  pre {
+    background: #fff;
+    padding: 1rem;
+    border-radius: 5px;
+    white-space: pre-wrap;
+  }
+</style>
+</head>
+<body>
+
+<h1>Quick AI Translator</h1>
+
+<textarea id="inputText" rows="5" placeholder="Nhập văn bản cần dịch..."></textarea>
+<input type="text" id="targetLang" placeholder="Ngôn ngữ đích (ví dụ: en, vi, fr)">
+<button onclick="translateText()">Dịch ngay</button>
+
+<h2>Kết quả:</h2>
+<pre id="outputText"></pre>
+
+<script>
+const API_KEY = "AIzaSyDiT4Um_axMoRkmpKLe9w-CRAtJkoki5uk";
+const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+
+async function translateText() {
+  const inputText = document.getElementById("inputText").value;
+  const targetLang = document.getElementById("targetLang").value || "en";
+  const output = document.getElementById("outputText");
+  output.textContent = "Đang dịch...";
+
+  try {
+    const response = await fetch(API_URL + "?key=" + API_KEY, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        "contents": [
+          { "parts": [{ "text": `Translate to ${targetLang}: ${inputText}` }] }
+        ]
+      })
+    });
+
+    const data = await response.json();
+    if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+      output.textContent = data.candidates[0].content[0].text || "Không có kết quả";
+    } else {
+      output.textContent = JSON.stringify(data, null, 2);
+    }
+  } catch (err) {
+    output.textContent = "Lỗi: " + err;
+  }
+}
+</script>
+
+</body>
+</html>
