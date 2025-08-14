@@ -3,29 +3,36 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quick AI Translator</title>
+<title>Mini Translator</title>
 <style>
   body {
     font-family: Arial, sans-serif;
-    padding: 2rem;
     background-color: #f4f4f4;
+    padding: 2rem;
   }
   h1 {
     text-align: center;
   }
-  textarea, input, button {
+  textarea {
     width: 100%;
     padding: 0.8rem;
-    margin: 0.5rem 0;
     font-size: 1rem;
+    margin-bottom: 0.5rem;
     border-radius: 5px;
     border: 1px solid #ccc;
+    resize: vertical;
+  }
+  button, select {
+    padding: 0.8rem;
+    font-size: 1rem;
+    margin: 0.5rem 0;
+    border-radius: 5px;
+    cursor: pointer;
   }
   button {
     background-color: #007bff;
     color: white;
     border: none;
-    cursor: pointer;
   }
   button:hover {
     background-color: #0056b3;
@@ -36,14 +43,26 @@
     border-radius: 5px;
     white-space: pre-wrap;
   }
+  .row {
+    display: flex;
+    gap: 0.5rem;
+  }
 </style>
 </head>
 <body>
 
-<h1>Quick AI Translator</h1>
+<h1>Mini Translator (EN ↔ VI)</h1>
 
-<textarea id="inputText" rows="5" placeholder="Nhập văn bản..."></textarea>
-<input type="text" id="targetLang" placeholder="Ngôn ngữ đích (ví dụ: en, vi)">
+<textarea id="inputText" rows="5" placeholder="Nhập văn bản...">Hello, how are you?</textarea>
+
+<div class="row">
+  <select id="sourceLang">
+    <option value="en">English</option>
+    <option value="vi">Tiếng Việt</option>
+  </select>
+  <button onclick="switchLang()">🔄 Switch</button>
+</div>
+
 <button onclick="translateText()">Dịch ngay</button>
 
 <h2>Kết quả:</h2>
@@ -53,35 +72,41 @@
 const API_KEY = "AIzaSyDiT4Um_axMoRkmpKLe9w-CRAtJkoki5uk";
 const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
+function switchLang() {
+  const select = document.getElementById("sourceLang");
+  select.value = select.value === "en" ? "vi" : "en";
+}
+
 async function translateText() {
-  const inputText = document.getElementById("inputText").value;
-  const targetLang = document.getElementById("targetLang").value || "en";
+  const inputText = document.getElementById("inputText").value.trim();
+  const sourceLang = document.getElementById("sourceLang").value;
+  const targetLang = sourceLang === "en" ? "vi" : "en";
   const output = document.getElementById("outputText");
+
+  if (!inputText) {
+    output.textContent = "Vui lòng nhập văn bản.";
+    return;
+  }
+
   output.textContent = "Đang dịch...";
 
+  // Prompt mặc định
+  const prompt = `Dịch văn bản sau sang ${targetLang === 'en' ? 'English' : 'Tiếng Việt'}: "${inputText}"`;
+
   try {
-    const response = await fetch(API_URL, {
+    const response = await fetch(`${API_URL}?key=${API_KEY}`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-goog-api-key": API_KEY
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: `Translate to ${targetLang}: ${inputText}` }
-            ]
-          }
-        ]
+        contents: [{ parts: [{ text: prompt }] }]
       })
     });
 
     const data = await response.json();
-    if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-      output.textContent = data.candidates[0].content[0].text || "Không có kết quả";
+    if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content[0].text) {
+      output.textContent = data.candidates[0].content[0].text;
     } else {
-      output.textContent = JSON.stringify(data, null, 2);
+      output.textContent = "Không nhận được kết quả hoặc lỗi API.\n" + JSON.stringify(data, null, 2);
     }
   } catch (err) {
     output.textContent = "Lỗi: " + err;
