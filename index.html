@@ -8,7 +8,7 @@
   body {
     font-family: Arial, sans-serif;
     padding: 2rem;
-    background: #f4f4f4;
+    background-color: #f4f4f4;
   }
   h1 {
     text-align: center;
@@ -42,8 +42,8 @@
 
 <h1>Quick AI Translator</h1>
 
-<textarea id="inputText" rows="5" placeholder="Nhập văn bản cần dịch..."></textarea>
-<input type="text" id="targetLang" placeholder="Ngôn ngữ đích (ví dụ: en, vi, fr)">
+<textarea id="inputText" rows="5" placeholder="Nhập văn bản..."></textarea>
+<input type="text" id="targetLang" placeholder="Ngôn ngữ đích (ví dụ: en, vi)">
 <button onclick="translateText()">Dịch ngay</button>
 
 <h2>Kết quả:</h2>
@@ -60,14 +60,19 @@ async function translateText() {
   output.textContent = "Đang dịch...";
 
   try {
-    const response = await fetch(API_URL + "?key=" + API_KEY, {
+    const response = await fetch(API_URL, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "X-goog-api-key": API_KEY
       },
       body: JSON.stringify({
-        "contents": [
-          { "parts": [{ "text": `Translate to ${targetLang}: ${inputText}` }] }
+        contents: [
+          {
+            parts: [
+              { text: `Translate to ${targetLang}: ${inputText}` }
+            ]
+          }
         ]
       })
     });
